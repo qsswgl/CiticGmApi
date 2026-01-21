@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  citic-gm-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: citic-gm-api
+    restart: unless-stopped
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:8080
+      - TZ=Asia/Shanghai
+    labels:
+      # Traefik自动发现标签
+      - "traefik.enable=true"
+      # HTTP路由规则 - 使用citic标签
+      - "traefik.http.routers.citic.rule=Host(`citic.qsgl.net`)"
+      - "traefik.http.routers.citic.entrypoints=websecure"
+      - "traefik.http.routers.citic.tls=true"
+      - "traefik.http.routers.citic.tls.certresolver=letsencrypt"
+      # 服务配置
+      - "traefik.http.services.citic.loadbalancer.server.port=8080"
+      # HTTP重定向到HTTPS
+      - "traefik.http.routers.citic-http.rule=Host(`citic.qsgl.net`)"
+      - "traefik.http.routers.citic-http.entrypoints=web"
+      - "traefik.http.middlewares.citic-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.citic-http.middlewares=citic-https-redirect"
+    networks:
+      - traefik-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/Crypto/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  traefik-net:
+    external: true

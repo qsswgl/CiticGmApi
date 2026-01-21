@@ -1,0 +1,48 @@
+bin/
+obj/
+/packages/
+runtimes/
+*.user
+*.userosscache
+*.suo
+*.cache
+*.log
+.vs/
+.vscode/
+*.swp
+*.*~
+project.lock.json
+.DS_Store
+*.pyc
+nupkg/
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# Visual Studio
+.vs/
+*.csproj.user
+*.dbmdl
+*.jfm
+
+# JetBrains Rider
+.idea/
+*.sln.iml
+
+# Docker
+.docker/
+
+# Environment files
+.env
+.env.local
+.env.*.local

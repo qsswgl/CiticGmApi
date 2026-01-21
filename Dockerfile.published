@@ -1,0 +1,29 @@
+# 使用Ubuntu基础镜像（自包含部署不需要.NET runtime）
+FROM ubuntu:24.04 AS final
+WORKDIR /app
+
+# 安装必要的依赖
+RUN apt-get update && \
+    apt-get install -y ca-certificates curl libicu74 && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# 设置时区
+ENV TZ=Asia/Shanghai
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+# 暴露端口
+EXPOSE 8080
+
+# 复制已发布的文件
+COPY . .
+
+# 赋予可执行权限
+RUN chmod +x ./CiticGmApi
+
+# 设置环境变量
+ENV ASPNETCORE_URLS=http://+:8080
+ENV ASPNETCORE_ENVIRONMENT=Production
+
+# 启动应用（自包含部署的可执行文件）
+ENTRYPOINT ["./CiticGmApi"]
