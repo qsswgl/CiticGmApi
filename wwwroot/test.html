@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中信银行国密API测试工具 - 完整流程版</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        .tabs {
+            display: flex;
+            background: #f5f5f5;
+            border-bottom: 2px solid #ddd;
+        }
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+        .tab:hover {
+            background: #e0e0e0;
+        }
+        .tab.active {
+            background: white;
+            border-bottom: 3px solid #667eea;
+            color: #667eea;
+        }
+        .tab-content {
+            display: none;
+            padding: 30px;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+            font-family: 'Courier New', monospace;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border-left: 4px solid #667eea;
+        }
+        .result h3 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+        .result pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        .success {
+            border-left-color: #28a745;
+        }
+        .error {
+            border-left-color: #dc3545;
+        }
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        .info-box strong {
+            color: #1976d2;
+        }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .btn-secondary {
+            background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔐 中信银行国密API测试工具</h1>
+            <p>支持 SM2 非对称加密、SM3WithSM2 签名验签、SM4-CBC 对称加密</p>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab(0)">SM2 签名</div>
+            <div class="tab" onclick="switchTab(1)">SM2 加密</div>
+            <div class="tab" onclick="switchTab(2)">SM2 解密</div>
+            <div class="tab" onclick="switchTab(3)">SM4 加密</div>
+            <div class="tab" onclick="switchTab(4)">SM4 解密</div>
+            <div class="tab" onclick="switchTab(5)">生成密钥</div>
+        </div>
+
+        <!-- Tab 0: SM2 签名 -->
+        <div class="tab-content active">
+            <div class="info-box">
+                <strong>说明：</strong>使用 SM3WithSM2 算法对数据进行签名。支持 <code>plaintext</code> 或 <code>data</code> 字段，支持 PEM/Base64/Hex 格式私钥。
+            </div>
+            <div class="form-group">
+                <label>明文数据：</label>
+                <textarea id="signPlaintext" placeholder="请输入要签名的明文数据">测试数据123</textarea>
+            </div>
+            <div class="form-group">
+                <label>私钥格式：</label>
+                <select id="signKeyFormat" onchange="updateSignKeyPlaceholder()">
+                    <option value="pem">PEM 格式（推荐）</option>
+                    <option value="base64">Base64 格式</option>
+                    <option value="hex">Hex 格式</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>私钥：</label>
+                <textarea id="signPrivateKey" placeholder="请输入私钥">MIGTAgEAMBMGByqGSM49AgEGCCqBHM9VAYItBHkwdwIBAQQgxB4ZLi0GN88d/LjX/FCyLc1FcQbLuRJo19YkXJLBP1KgCgYIKoEcz1UBgi2hRANCAAS+9u4WYMLDPrwCxHpGX0zKzl1OQwGvNJPwjZLXcT4vU4YJQfLw+79OJcMpUXrQhLKzl1lB0YfwzzzDrYXnfQrB</textarea>
+            </div>
+            <div class="btn-group">
+                <button onclick="testSm2Sign()">🖊️ 执行签名</button>
+                <button class="btn-secondary" onclick="clearResult('signResult')">清空结果</button>
+            </div>
+            <div id="signResult"></div>
+        </div>
+
+        <!-- Tab 1: SM2 加密 -->
+        <div class="tab-content">
+            <div class="info-box">
+                <strong>说明：</strong>使用 SM2 公钥加密数据。支持 X509 Base64 或 Hex 格式公钥。
+            </div>
+            <div class="form-group">
+                <label>明文数据：</label>
+                <textarea id="encPlaintext" placeholder="请输入要加密的明文">Hello World</textarea>
+            </div>
+            <div class="form-group">
+                <label>公钥：</label>
+                <textarea id="encPublicKey" placeholder="请输入公钥（X509 Base64 或 Hex）"></textarea>
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="encBase64Input"> 明文是 Base64 编码
+                </label>
+            </div>
+            <div class="btn-group">
+                <button onclick="testSm2Encrypt()">🔒 执行加密</button>
+                <button class="btn-secondary" onclick="clearResult('encResult')">清空结果</button>
+            </div>
+            <div id="encResult"></div>
+        </div>
+
+        <!-- Tab 2: SM2 解密 -->
+        <div class="tab-content">
+            <div class="info-box">
+                <strong>说明：</strong>使用 SM2 私钥解密数据。支持 <code>privateKey</code> 或 <code>privateKeyHex</code> 字段，支持 PEM/Base64/Hex 格式。
+            </div>
+            <div class="form-group">
+                <label>密文（Base64）：</label>
+                <textarea id="decCiphertext" placeholder="请输入密文（Base64 编码）"></textarea>
+            </div>
+            <div class="form-group">
+                <label>私钥格式：</label>
+                <select id="decKeyFormat">
+                    <option value="pem">PEM 格式（推荐）</option>
+                    <option value="base64">Base64 格式</option>
+                    <option value="hex">Hex 格式</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>私钥：</label>
+                <textarea id="decPrivateKey" placeholder="请输入私钥"></textarea>
+            </div>
+            <div class="btn-group">
+                <button onclick="testSm2Decrypt()">🔓 执行解密</button>
+                <button class="btn-secondary" onclick="clearResult('decResult')">清空结果</button>
+            </div>
+            <div id="decResult"></div>
+        </div>
+
+        <!-- Tab 3: SM4 加密 -->
+        <div class="tab-content">
+            <div class="info-box">
+                <strong>说明：</strong>使用 SM4-CBC 算法加密数据。密钥和 IV 为 Hex 格式（32个字符）。
+            </div>
+            <div class="form-group">
+                <label>明文数据：</label>
+                <textarea id="sm4EncPlaintext" placeholder="请输入明文">测试SM4加密</textarea>
+            </div>
+            <div class="form-group">
+                <label>密钥（Hex，32字符）：</label>
+                <input type="text" id="sm4EncKey" placeholder="例如：0123456789abcdef0123456789abcdef">
+            </div>
+            <div class="form-group">
+                <label>IV（Hex，32字符）：</label>
+                <input type="text" id="sm4EncIv" placeholder="例如：0123456789abcdef0123456789abcdef">
+            </div>
+            <div class="btn-group">
+                <button onclick="testSm4Encrypt()">🔒 执行加密</button>
+                <button class="btn-secondary" onclick="generateSm4Key()">🎲 生成密钥</button>
+                <button class="btn-secondary" onclick="clearResult('sm4EncResult')">清空结果</button>
+            </div>
+            <div id="sm4EncResult"></div>
+        </div>
+
+        <!-- Tab 4: SM4 解密 -->
+        <div class="tab-content">
+            <div class="info-box">
+                <strong>说明：</strong>使用 SM4-CBC 算法解密数据。密文为 Base64 格式，密钥和 IV 为 Hex 格式。
+            </div>
+            <div class="form-group">
+                <label>密文（Base64）：</label>
+                <textarea id="sm4DecCiphertext" placeholder="请输入密文（Base64 编码）"></textarea>
+            </div>
+            <div class="form-group">
+                <label>密钥（Hex，32字符）：</label>
+                <input type="text" id="sm4DecKey" placeholder="与加密时使用的密钥一致">
+            </div>
+            <div class="form-group">
+                <label>IV（Hex，32字符）：</label>
+                <input type="text" id="sm4DecIv" placeholder="与加密时使用的 IV 一致">
+            </div>
+            <div class="btn-group">
+                <button onclick="testSm4Decrypt()">🔓 执行解密</button>
+                <button class="btn-secondary" onclick="clearResult('sm4DecResult')">清空结果</button>
+            </div>
+            <div id="sm4DecResult"></div>
+        </div>
+
+        <!-- Tab 5: 生成密钥 -->
+        <div class="tab-content">
+            <div class="info-box">
+                <strong>说明：</strong>生成 SM2 密钥对或 SM4 密钥。
+            </div>
+            <h3 style="margin-bottom: 15px;">SM2 密钥对生成</h3>
+            <button onclick="generateSm2KeyPair()">🔑 生成 SM2 密钥对</button>
+            <div id="sm2KeyResult"></div>
+
+            <hr style="margin: 30px 0; border: none; border-top: 2px solid #eee;">
+
+            <h3 style="margin-bottom: 15px;">SM4 密钥生成</h3>
+            <button onclick="generateSm4KeyAPI()">🔑 生成 SM4 密钥</button>
+            <div id="sm4KeyResult"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://citic.qsgl.net/api/Crypto';
+
+        function switchTab(index) {
+            const tabs = document.querySelectorAll('.tab');
+            const contents = document.querySelectorAll('.tab-content');
+            
+            tabs.forEach(t => t.classList.remove('active'));
+            contents.forEach(c => c.classList.remove('active'));
+            
+            tabs[index].classList.add('active');
+            contents[index].classList.add('active');
+        }
+
+        function showResult(elementId, success, message, data = null) {
+            const resultDiv = document.getElementById(elementId);
+            const className = success ? 'success' : 'error';
+            const icon = success ? '✅' : '❌';
+            
+            let html = `<div class="result ${className}">`;
+            html += `<h3>${icon} ${message}</h3>`;
+            
+            if (data) {
+                html += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            }
+            
+            html += '</div>';
+            resultDiv.innerHTML = html;
+        }
+
+        function clearResult(elementId) {
+            document.getElementById(elementId).innerHTML = '';
+        }
+
+        function updateSignKeyPlaceholder() {
+            const format = document.getElementById('signKeyFormat').value;
+            const textarea = document.getElementById('signPrivateKey');
+            
+            if (format === 'pem') {
+                textarea.placeholder = '-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----';
+            } else if (format === 'base64') {
+                textarea.placeholder = 'Base64 编码的私钥，例如：xB4ZLi0GN88d/LjX/FCyLc1FcQbLuRJo19YkXJLBP1I=';
+            } else {
+                textarea.placeholder = 'Hex 编码的私钥，例如：c41e192e2d0637cf1dfcb8d7fc50b22dcd457106cbb91268d7d6245c92c13f52';
+            }
+        }
+
+        async function testSm2Sign() {
+            const plaintext = document.getElementById('signPlaintext').value;
+            const privateKey = document.getElementById('signPrivateKey').value;
+            
+            if (!plaintext || !privateKey) {
+                showResult('signResult', false, '请填写完整信息');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/sm2/sign`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ plaintext, privateKey })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    showResult('signResult', true, '签名成功', result);
+                } else {
+                    showResult('signResult', false, '签名失败', result);
+                }
+            } catch (error) {
+                showResult('signResult', false, `请求失败: ${error.message}`);
+            }
+        }
+
+        async function testSm2Encrypt() {
+            const plaintext = document.getElementById('encPlaintext').value;
+            const publicKey = document.getElementById('encPublicKey').value;
+            const isBase64Input = document.getElementById('encBase64Input').checked;
+            
+            if (!plaintext || !publicKey) {
+                showResult('encResult', false, '请填写完整信息');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/sm2/encrypt`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ plaintext, publicKey, isBase64Input })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    showResult('encResult', true, '加密成功', result);
+                    // 自动填充到解密页面
+                    document.getElementById('decCiphertext').value = result.data.ciphertext;
+                } else {
+                    showResult('encResult', false, '加密失败', result);
+                }
+            } catch (error) {
+                showResult('encResult', false, `请求失败: ${error.message}`);
+            }
+        }
+
+        async function testSm2Decrypt() {
+            const ciphertext = document.getElementById('decCiphertext').value;
+            const privateKey = document.getElementById('decPrivateKey').value;
+            const keyFormat = document.getElementById('decKeyFormat').value;
+            
+            if (!ciphertext || !privateKey) {
+                showResult('decResult', false, '请填写完整信息');
+                return;
+            }
+
+            const body = { ciphertext };
+            
+            // 根据格式使用不同的字段名
+            if (keyFormat === 'hex') {
+                body.privateKeyHex = privateKey;
+            } else {
+                body.privateKey = privateKey;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/sm2/decrypt`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    showResult('decResult', true, '解密成功', result);
+                } else {
+                    showResult('decResult', false, '解密失败', result);
+                }
+            } catch (error) {
+                showResult('decResult', false, `请求失败: ${error.message}`);
+            }
+        }
+
+        async function testSm4Encrypt() {
+            const plaintext = document.getElementById('sm4EncPlaintext').value;
+            const key = document.getElementById('sm4EncKey').value;
+            const iv = document.getElementById('sm4EncIv').value;
+            
+            if (!plaintext || !key || !iv) {
+                showResult('sm4EncResult', false, '请填写完整信息');
+                return;
+            }
+
+            if (key.length !== 32 || iv.length !== 32) {
+                showResult('sm4EncResult', false, '密钥和IV必须是32个字符（16字节Hex）');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/sm4/encrypt`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ plaintext, key, iv })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    showResult('sm4EncResult', true, 'SM4加密成功', result);
+                    // 自动填充到解密页面
+                    document.getElementById('sm4DecCiphertext').value = result.data.ciphertext;
+                    document.getElementById('sm4DecKey').value = key;
+                    document.getElementById('sm4DecIv').value = iv;
+                } else {
+                    showResult('sm4EncResult', false, 'SM4加密失败', result);
+                }
+            } catch (error) {
+                showResult('sm4EncResult', false, `请求失败: ${error.message}`);
+            }
+        }
+
+        async function testSm4Decrypt() {
+            const ciphertext = document.getElementById('sm4DecCiphertext').value;
+            const key = document.getElementById('sm4DecKey').value;
+            const iv = document.getElementById('sm4DecIv').value;
+            
+            if (!ciphertext || !key || !iv) {
+                showResult('sm4DecResult', false, '请填写完整信息');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/sm4/decrypt`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ciphertext, key, iv })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    showResult('sm4DecResult', true, 'SM4解密成功', result);
+                } else {
+                    showResult('sm4DecResult', false, 'SM4解密失败', result);
+                }
+            } catch (error) {
+                showResult('sm4DecResult', false, `请求失败: ${error.message}`);
+            }
+        }
+
+        async function generateSm2KeyPair() {
+            try {
+                const response = await fetch(`${API_BASE}/sm2/keypair`, {
+                    method: 'GET'
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    showResult('sm2KeyResult', true, 'SM2密钥对生成成功', result);
+                    
+                    // 自动填充到签名和解密页面
+                    document.getElementById('signPrivateKey').value = result.data.privateKey;
+                    document.getElementById('decPrivateKey').value = result.data.privateKey;
+                    document.getElementById('encPublicKey').value = result.data.publicKey;
+                } else {
+                    showResult('sm2KeyResult', false, '密钥生成失败', result);
+                }
+            } catch (error) {
+                showResult('sm2KeyResult', false, `请求失败: ${error.message}`);
+            }
+        }
+
+        async function generateSm4KeyAPI() {
+            try {
+                const response = await fetch(`${API_BASE}/sm4/generate-key`, {
+                    method: 'GET'
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    showResult('sm4KeyResult', true, 'SM4密钥生成成功', result);
+                    
+                    // 自动填充到SM4加密页面
+                    document.getElementById('sm4EncKey').value = result.data.key;
+                    document.getElementById('sm4EncIv').value = result.data.iv;
+                } else {
+                    showResult('sm4KeyResult', false, 'SM4密钥生成失败', result);
+                }
+            } catch (error) {
+                showResult('sm4KeyResult', false, `请求失败: ${error.message}`);
+            }
+        }
+
+        function generateSm4Key() {
+            // 客户端生成随机Hex密钥和IV
+            const key = Array.from({length: 16}, () => Math.floor(Math.random() * 256).toString(16).padStart(2, '0')).join('');
+            const iv = Array.from({length: 16}, () => Math.floor(Math.random() * 256).toString(16).padStart(2, '0')).join('');
+            
+            document.getElementById('sm4EncKey').value = key;
+            document.getElementById('sm4EncIv').value = iv;
+            
+            showResult('sm4EncResult', true, '已生成随机SM4密钥和IV', { key, iv });
+        }
+    </script>
+</body>
+</html>

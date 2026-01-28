@@ -48,14 +48,20 @@ builder.WebHost.ConfigureKestrel(options =>
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
+// 启用静态文件服务（用于测试页面）
+app.UseStaticFiles();
+
 app.UseSwagger();
 app.UseSwaggerUI(options =>
 {
     options.SwaggerEndpoint("/swagger/v1/swagger.json", "中信国密API v1");
-    options.RoutePrefix = string.Empty; // 设置Swagger UI为根路径
+    options.RoutePrefix = "swagger"; // 将 Swagger UI 移到 /swagger 路径
 });
 
 app.UseAuthorization();
 app.MapControllers();
+
+// 设置默认页面重定向到测试工具
+app.MapGet("/", () => Results.Redirect("/workflow-test.html"));
 
 app.Run();

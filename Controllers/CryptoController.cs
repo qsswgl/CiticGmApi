@@ -46,12 +46,13 @@ public class CryptoController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<EncryptResult>), StatusCodes.Status400BadRequest)]
     public ActionResult<ApiResponse<EncryptResult>> Sm2Encrypt([FromBody] Sm2EncryptRequest request)
     {
-        if (string.IsNullOrEmpty(request.Plaintext) || string.IsNullOrEmpty(request.PublicKey))
+        var publicKey = request.GetPublicKey();
+        if (string.IsNullOrEmpty(request.Plaintext) || string.IsNullOrEmpty(publicKey))
         {
             return BadRequest(new ApiResponse<EncryptResult>
             {
                 Success = false,
-                Message = "明文和公钥不能为空"
+                Message = "明文和公钥不能为空（支持publicKey或publicKeyHex字段）"
             });
         }
 
@@ -83,12 +84,13 @@ public class CryptoController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<DecryptResult>), StatusCodes.Status400BadRequest)]
     public ActionResult<ApiResponse<DecryptResult>> Sm2Decrypt([FromBody] Sm2DecryptRequest request)
     {
-        if (string.IsNullOrEmpty(request.Ciphertext) || string.IsNullOrEmpty(request.PrivateKey))
+        var privateKey = request.GetPrivateKey();
+        if (string.IsNullOrEmpty(request.Ciphertext) || string.IsNullOrEmpty(privateKey))
         {
             return BadRequest(new ApiResponse<DecryptResult>
             {
                 Success = false,
-                Message = "密文和私钥不能为空"
+                Message = "密文和私钥不能为空（支持privateKey或privateKeyHex字段）"
             });
         }
 
@@ -125,12 +127,13 @@ public class CryptoController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<SignResult>), StatusCodes.Status400BadRequest)]
     public ActionResult<ApiResponse<SignResult>> Sm2Sign([FromBody] Sm2SignRequest request)
     {
-        if (string.IsNullOrEmpty(request.Data) || string.IsNullOrEmpty(request.PrivateKey))
+        var dataToSign = request.GetDataToSign();
+        if (string.IsNullOrEmpty(dataToSign) || string.IsNullOrEmpty(request.PrivateKey))
         {
             return BadRequest(new ApiResponse<SignResult>
             {
                 Success = false,
-                Message = "数据和私钥不能为空"
+                Message = "数据和私钥不能为空（支持data或plaintext字段）"
             });
         }
 

@@ -11,9 +11,19 @@ public class Sm2EncryptRequest
     public string Plaintext { get; set; } = string.Empty;
 
     /// <summary>
-    /// 公钥（Base64编码的X509证书内容，不含BEGIN/END标记）
+    /// 公钥（支持Base64编码的X509证书、PEM格式或Hex格式）
     /// </summary>
-    public string PublicKey { get; set; } = string.Empty;
+    public string? PublicKey { get; set; }
+
+    /// <summary>
+    /// 公钥（Hex格式）- 兼容字段名
+    /// </summary>
+    public string? PublicKeyHex { get; set; }
+
+    /// <summary>
+    /// 获取实际的公钥（优先使用 PublicKey，其次 PublicKeyHex）
+    /// </summary>
+    public string GetPublicKey() => PublicKey ?? PublicKeyHex ?? string.Empty;
 
     /// <summary>
     /// 是否将明文作为Base64解码（默认false，直接作为UTF8字符串）
@@ -32,9 +42,24 @@ public class Sm2DecryptRequest
     public string Ciphertext { get; set; } = string.Empty;
 
     /// <summary>
-    /// 私钥（PEM格式，包含BEGIN/END标记）
+    /// 私钥（支持PEM格式、Base64编码或Hex格式）
     /// </summary>
-    public string PrivateKey { get; set; } = string.Empty;
+    public string? PrivateKey { get; set; }
+
+    /// <summary>
+    /// 私钥（Hex格式）- 兼容字段名
+    /// </summary>
+    public string? PrivateKeyHex { get; set; }
+
+    /// <summary>
+    /// 私钥密码（如果私钥是加密的PKCS#8格式）
+    /// </summary>
+    public string? Password { get; set; }
+
+    /// <summary>
+    /// 获取实际的私钥（优先使用 PrivateKey，其次 PrivateKeyHex）
+    /// </summary>
+    public string GetPrivateKey() => PrivateKey ?? PrivateKeyHex ?? string.Empty;
 }
 
 /// <summary>
@@ -43,12 +68,22 @@ public class Sm2DecryptRequest
 public class Sm2SignRequest
 {
     /// <summary>
-    /// 待签名的数据（UTF8字符串）
+    /// 待签名的数据（UTF8字符串）- 兼容字段名 data
     /// </summary>
-    public string Data { get; set; } = string.Empty;
+    public string? Data { get; set; }
 
     /// <summary>
-    /// 私钥（PEM格式，包含BEGIN/END标记）
+    /// 待签名的数据（UTF8字符串）- 兼容字段名 plaintext
+    /// </summary>
+    public string? Plaintext { get; set; }
+
+    /// <summary>
+    /// 获取实际的待签名数据（优先使用 Plaintext，其次 Data）
+    /// </summary>
+    public string GetDataToSign() => Plaintext ?? Data ?? string.Empty;
+
+    /// <summary>
+    /// 私钥（支持PEM格式或Base64编码的原始密钥）
     /// </summary>
     public string PrivateKey { get; set; } = string.Empty;
 

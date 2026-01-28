@@ -34,14 +34,45 @@ public class GmCryptoService : IGmCryptoService
     {
         try
         {
-            // 获取公钥
-            var publicKey = GetPublickeyFromX509String(request.PublicKey);
+            var publicKeyStr = request.GetPublicKey();
+            
+            // 尝试多种方式解析公钥
+            AsymmetricKeyParameter? publicKey = null;
+            
+            // 1. 尝试作为X509格式读取（Base64编码的证书）
+            try
+            {
+                publicKey = GetPublickeyFromX509String(publicKeyStr);
+            }
+            catch { }
+            
+            // 2. 如果X509失败，尝试作为Hex公钥（128字符或130字符）
+            if (publicKey == null)
+            {
+                try
+                {
+                    string hexKey = publicKeyStr.Trim().Replace(" ", "");
+                    // SM2公钥通常是130个hex字符（65字节，包含04前缀）或128个字符（64字节，不含前缀）
+                    if (hexKey.Length == 130 || hexKey.Length == 128)
+                    {
+                        if (hexKey.Length == 130)
+                        {
+                            hexKey = hexKey.Substring(2, 128); // 去掉04前缀
+                        }
+                        string x = hexKey.Substring(0, 64);
+                        string y = hexKey.Substring(64);
+                        publicKey = GetPublickeyFromXY(new BigInteger(x, 16), new BigInteger(y, 16));
+                    }
+                }
+                catch { }
+            }
+            
             if (publicKey == null)
             {
                 return new ApiResponse<EncryptResult>
                 {
                     Success = false,
-                    Message = "无效的公钥格式"
+                    Message = "无效的公钥格式（支持X509 Base64或Hex格式）"
                 };
             }
 
@@ -51,9 +82,9 @@ public class GmCryptoService : IGmCryptoService
             {
                 pubKeyHex = pubKeyHex.Substring(2, 128);
             }
-            string x = pubKeyHex.Substring(0, 64);
-            string y = pubKeyHex.Substring(64);
-            var processedPubKey = GetPublickeyFromXY(new BigInteger(x, 16), new BigInteger(y, 16));
+            string x2 = pubKeyHex.Substring(0, 64);
+            string y2 = pubKeyHex.Substring(64);
+            var processedPubKey = GetPublickeyFromXY(new BigInteger(x2, 16), new BigInteger(y2, 16));
 
             // 获取明文
             byte[] plainBytes = request.IsBase64Input
@@ -102,14 +133,85 @@ public class GmCryptoService : IGmCryptoService
     {
         try
         {
-            // 读取私钥
-            var privateKey = ReadPemECP(request.PrivateKey);
+            var privateKeyStr = request.GetPrivateKey();
+            
+            // 尝试多种方式解析私钥
+            ECPrivateKeyParameters? privateKey = null;
+            
+            // 1. 尝试作为PEM格式读取
+            if (privateKeyStr.Contains("BEGIN"))
+            {
+                privateKey = ReadPemECP(privateKeyStr);
+            }
+            
+            // 2. 如果PEM失败，尝试作为加密的Base64 PKCS#8格式（需要密码）
+            if (privateKey == null && !string.IsNullOrEmpty(request.Password))
+            {
+                try
+                {
+                    byte[] encryptedKeyBytes = Convert.FromBase64String(privateKeyStr.Trim());
+                    privateKey = DecryptPrivateKey(encryptedKeyBytes, request.Password);
+                }
+                catch { }
+            }
+            
+            // 3. 如果还是失败，尝试作为Base64解码后的原始密钥（无密码）
+            if (privateKey == null)
+            {
+                try
+                {
+                    byte[] keyBytes = Convert.FromBase64String(privateKeyStr.Trim());
+                    // 假设是32字节的私钥D值
+                    if (keyBytes.Length >= 32)
+                    {
+                        byte[] dBytes = keyBytes.Length == 32 ? keyBytes : keyBytes.Skip(keyBytes.Length - 32).Take(32).ToArray();
+                        BigInteger d = new BigInteger(1, dBytes);
+                        privateKey = GetPrivatekeyFromD(d);
+                    }
+                }
+                catch { }
+            }
+            
+            // 4. 如果还是失败，尝试作为Hex字符串
+            if (privateKey == null)
+            {
+                try
+                {
+                    string hexKey = privateKeyStr.Trim().Replace(" ", "").Replace("-", "");
+                    // 移除可能的0x前缀
+                    if (hexKey.StartsWith("0x", StringComparison.OrdinalIgnoreCase) || 
+                        hexKey.StartsWith("0X", StringComparison.OrdinalIgnoreCase))
+                    {
+                        hexKey = hexKey.Substring(2);
+                    }
+                    
+                    // 移除前导0（如果超过64个字符）
+                    while (hexKey.Length > 64 && hexKey.StartsWith("0"))
+                    {
+                        hexKey = hexKey.Substring(1);
+                    }
+                    
+                    if (hexKey.Length == 64 || hexKey.Length == 66) // 32字节 = 64个hex字符，或带04前缀
+                    {
+                        // 如果是66位且以04开头，去掉04
+                        if (hexKey.Length == 66 && hexKey.StartsWith("04"))
+                        {
+                            hexKey = hexKey.Substring(2);
+                        }
+                        
+                        BigInteger d = new BigInteger(hexKey, 16);
+                        privateKey = GetPrivatekeyFromD(d);
+                    }
+                }
+                catch { }
+            }
+            
             if (privateKey == null)
             {
                 return new ApiResponse<DecryptResult>
                 {
                     Success = false,
-                    Message = "无效的私钥格式"
+                    Message = "无效的私钥格式（支持PEM、加密PKCS#8+密码、Base64或Hex格式）"
                 };
             }
 
@@ -153,27 +255,63 @@ public class GmCryptoService : IGmCryptoService
     {
         try
         {
-            // 读取私钥
-            var privateKey = ReadPemECP(request.PrivateKey);
+            var dataToSign = request.GetDataToSign();
+            
+            // 尝试多种方式解析私钥
+            ECPrivateKeyParameters? privateKey = null;
+            
+            // 1. 尝试作为PEM格式读取
+            if (request.PrivateKey.Contains("BEGIN"))
+            {
+                privateKey = ReadPemECP(request.PrivateKey);
+            }
+            
+            // 2. 如果PEM失败，尝试作为Base64解码后的原始密钥
+            if (privateKey == null)
+            {
+                try
+                {
+                    byte[] keyBytes = Convert.FromBase64String(request.PrivateKey.Trim());
+                    // 假设是32字节的私钥D值
+                    if (keyBytes.Length >= 32)
+                    {
+                        byte[] dBytes = keyBytes.Length == 32 ? keyBytes : keyBytes.Skip(keyBytes.Length - 32).Take(32).ToArray();
+                        BigInteger d = new BigInteger(1, dBytes);
+                        privateKey = GetPrivatekeyFromD(d);
+                    }
+                }
+                catch { }
+            }
+            
+            // 3. 如果还是失败，尝试作为Hex字符串
+            if (privateKey == null)
+            {
+                try
+                {
+                    string hexKey = request.PrivateKey.Trim().Replace(" ", "");
+                    if (hexKey.Length == 64) // 32字节 = 64个hex字符
+                    {
+                        BigInteger d = new BigInteger(hexKey, 16);
+                        privateKey = GetPrivatekeyFromD(d);
+                    }
+                }
+                catch { }
+            }
+            
             if (privateKey == null)
             {
                 return new ApiResponse<SignResult>
                 {
                     Success = false,
-                    Message = "无效的私钥格式"
+                    Message = "无效的私钥格式（支持PEM、Base64或Hex格式）"
                 };
             }
 
-            // 从私钥获取D值重建私钥对象
-            string privateKeyHex = Hex.ToHexString(privateKey.D.ToByteArray());
-            BigInteger d = new BigInteger(privateKeyHex, 16);
-            var bcecPrivateKey = GetPrivatekeyFromD(d);
-
-            byte[] dataBytes = Encoding.UTF8.GetBytes(request.Data);
+            byte[] dataBytes = Encoding.UTF8.GetBytes(dataToSign);
             byte[] userIdBytes = Encoding.UTF8.GetBytes(request.UserId);
 
             // 签名
-            byte[] signature = SignSm3WithSm2(dataBytes, userIdBytes, bcecPrivateKey);
+            byte[] signature = SignSm3WithSm2(dataBytes, userIdBytes, privateKey);
             if (signature == null)
             {
                 return new ApiResponse<SignResult>
@@ -680,6 +818,36 @@ public class GmCryptoService : IGmCryptoService
         try
         {
             return new DerSequence(v).GetEncoded("DER");
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// 解密加密的PKCS#8私钥
+    /// </summary>
+    private static ECPrivateKeyParameters? DecryptPrivateKey(byte[] encryptedPrivateKey, string password)
+    {
+        try
+        {
+            // 使用BouncyCastle解密PKCS#8加密私钥
+            char[] passwordChars = password.ToCharArray();
+            object privateKeyObject = Org.BouncyCastle.Security.PrivateKeyFactory.DecryptKey(passwordChars, encryptedPrivateKey);
+            
+            if (privateKeyObject is ECPrivateKeyParameters ecPrivateKey)
+            {
+                return ecPrivateKey;
+            }
+            
+            // 如果返回的是AsymmetricKeyParameter，尝试转换
+            if (privateKeyObject is AsymmetricKeyParameter asymmetricKey && asymmetricKey.IsPrivate)
+            {
+                return privateKeyObject as ECPrivateKeyParameters;
+            }
+            
+            return null;
         }
         catch
         {
