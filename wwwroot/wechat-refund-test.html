@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>微信服务商退款测试 - ABC Payment Gateway</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            color: #555;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group .hint {
+            font-size: 12px;
+            color: #999;
+            margin-top: 5px;
+        }
+
+        .form-group .required {
+            color: #e74c3c;
+            margin-left: 2px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #666;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .btn-success {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #229954;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .result-box {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 6px;
+            font-size: 13px;
+            line-height: 1.6;
+            display: none;
+        }
+
+        .result-box.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .result-box.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .result-box.info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+
+        .result-box pre {
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px;
+            background: #f5f5f5;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .quick-fill {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .quick-fill button {
+            padding: 8px 15px;
+            background: #e8eaf6;
+            border: 1px solid #c5cae9;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .quick-fill button:hover {
+            background: #c5cae9;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .status-badge.online {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-badge.offline {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        @media (max-width: 768px) {
+            .btn-group {
+                flex-direction: column;
+            }
+
+            .quick-fill {
+                flex-direction: column;
+            }
+
+            .tabs {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔄 微信服务商退款测试</h1>
+            <p>ABC Payment Gateway - Wechat Refund API Test</p>
+        </div>
+
+        <!-- 服务状态卡片 -->
+        <div class="card">
+            <div class="card-title">
+                📡 服务状态
+                <span id="serviceStatus" class="status-badge offline">检查中...</span>
+            </div>
+            <div id="statusInfo"></div>
+        </div>
+
+        <!-- 测试选项卡 -->
+        <div class="card">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('get')">GET 方式退款</button>
+                <button class="tab" onclick="switchTab('post')">POST 方式退款</button>
+                <button class="tab" onclick="switchTab('query')">查询退款</button>
+            </div>
+
+            <!-- GET 方式退款表单 -->
+            <div id="tab-get" class="tab-content active">
+                <div class="card-title">GET 方式退款（URL 参数）</div>
+                
+                <div class="quick-fill">
+                    <button onclick="fillTestData('get')">📝 填充测试数据</button>
+                    <button onclick="clearForm('get')">🗑️ 清空表单</button>
+                </div>
+
+                <form id="getForm" onsubmit="submitRefundGet(event)">
+                    <div class="form-group">
+                        <label>数据库名称 <span class="required">*</span></label>
+                        <input type="text" name="DBName" placeholder="例如: qsoft782" required>
+                        <div class="hint">业务系统数据库标识</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>订单总金额（分）<span class="required">*</span></label>
+                        <input type="number" name="total_fee" placeholder="例如: 5000" required>
+                        <div class="hint">原订单的总金额，单位：分（100元 = 10000分）</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>退款金额（分）<span class="required">*</span></label>
+                        <input type="number" name="refund_fee" placeholder="例如: 5000" required>
+                        <div class="hint">要退款的金额，必须 ≤ 订单总金额</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>服务商商户号 <span class="required">*</span></label>
+                        <input type="text" name="mch_id" placeholder="例如: 1286651401（留空使用配置）">
+                        <div class="hint">微信分配的服务商商户号（可选，留空则从服务器配置读取）</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>服务商 AppId</label>
+                        <input type="text" name="appid" placeholder="例如: wxc74a6aac13640229（留空使用配置）">
+                        <div class="hint">微信分配的服务商 AppId（可选，留空则从服务器配置读取）</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>特约商户号 <span class="required">*</span></label>
+                        <input type="text" name="sub_mch_id" placeholder="例如: 1641962649" required>
+                        <div class="hint">子商户号</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>微信订单号</label>
+                        <input type="text" name="transaction_id" placeholder="例如: 4200002973202601249679270528">
+                        <div class="hint">微信支付订单号（优先使用，与商户订单号二选一）</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>商户订单号</label>
+                        <input type="text" name="out_trade_no" placeholder="商户系统内部订单号">
+                        <div class="hint">微信订单号为空时必填</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>退款原因</label>
+                        <input type="text" name="refund_desc" placeholder="例如: 客户申请退款">
+                        <div class="hint">选填，默认为"客户申请退款"</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>退款通知 URL</label>
+                        <input type="url" name="notify_url" placeholder="https://your-domain.com/notify">
+                        <div class="hint">接收退款结果通知的 URL</div>
+                    </div>
+
+                    <div class="btn-group">
+                        <button type="submit" class="btn btn-primary">🚀 发起退款（GET）</button>
+                        <button type="button" class="btn btn-secondary" onclick="clearForm('get')">重置</button>
+                    </div>
+                </form>
+
+                <div id="getResult" class="result-box"></div>
+            </div>
+
+            <!-- POST 方式退款表单 -->
+            <div id="tab-post" class="tab-content">
+                <div class="card-title">POST 方式退款（JSON 格式）</div>
+                
+                <div class="quick-fill">
+                    <button onclick="fillTestData('post')">📝 填充测试数据</button>
+                    <button onclick="clearForm('post')">🗑️ 清空表单</button>
+                </div>
+
+                <form id="postForm" onsubmit="submitRefundPost(event)">
+                    <div class="form-group">
+                        <label>JSON 请求体 <span class="required">*</span></label>
+                        <textarea name="jsonBody" rows="20" placeholder="输入 JSON 格式的退款请求" required></textarea>
+                        <div class="hint">完整的 JSON 格式请求体</div>
+                    </div>
+
+                    <div class="btn-group">
+                        <button type="submit" class="btn btn-primary">🚀 发起退款（POST）</button>
+                        <button type="button" class="btn btn-secondary" onclick="clearForm('post')">重置</button>
+                    </div>
+                </form>
+
+                <div id="postResult" class="result-box"></div>
+            </div>
+
+            <!-- 查询退款表单 -->
+            <div id="tab-query" class="tab-content">
+                <div class="card-title">查询退款状态</div>
+                
+                <div class="quick-fill">
+                    <button onclick="fillTestData('query')">📝 填充测试数据</button>
+                    <button onclick="clearForm('query')">🗑️ 清空表单</button>
+                </div>
+
+                <form id="queryForm" onsubmit="submitQuery(event)">
+                    <div class="form-group">
+                        <label>商户退款单号 <span class="required">*</span></label>
+                        <input type="text" name="out_refund_no" placeholder="例如: RF20260128123456" required>
+                        <div class="hint">退款时返回的商户退款单号</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>服务商商户号</label>
+                        <input type="text" name="mch_id" placeholder="例如: 1286651401（留空使用配置）">
+                        <div class="hint">可选，留空则从服务器配置读取</div>
+                    </div>
+
+                    <div class="btn-group">
+                        <button type="submit" class="btn btn-success">🔍 查询退款</button>
+                        <button type="button" class="btn btn-secondary" onclick="clearForm('query')">重置</button>
+                    </div>
+                </form>
+
+                <div id="queryResult" class="result-box"></div>
+            </div>
+        </div>
+
+        <!-- 加载动画 -->
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p style="margin-top: 10px; color: #666;">请求处理中...</p>
+        </div>
+    </div>
+
+    <script>
+        // API 基础 URL
+        const API_BASE = window.location.origin;
+
+        // 页面加载时检查服务状态
+        window.addEventListener('DOMContentLoaded', () => {
+            checkServiceStatus();
+        });
+
+        // 检查服务状态
+        async function checkServiceStatus() {
+            try {
+                const healthResponse = await fetch(`${API_BASE}/Wechat/Health`);
+                const healthData = await healthResponse.json();
+
+                const statusBadge = document.getElementById('serviceStatus');
+                const statusInfo = document.getElementById('statusInfo');
+
+                if (healthData.status === '运行中') {
+                    statusBadge.textContent = '在线';
+                    statusBadge.className = 'status-badge online';
+                    statusInfo.innerHTML = `
+                        <p style="color: #155724; margin-top: 10px;">
+                            ✅ <strong>${healthData.service}</strong><br>
+                            版本: ${healthData.version}<br>
+                            时间: ${healthData.timestamp}
+                        </p>
+                    `;
+                } else {
+                    throw new Error('服务异常');
+                }
+            } catch (error) {
+                const statusBadge = document.getElementById('serviceStatus');
+                const statusInfo = document.getElementById('statusInfo');
+                statusBadge.textContent = '离线';
+                statusBadge.className = 'status-badge offline';
+                statusInfo.innerHTML = `<p style="color: #721c24;">❌ 无法连接到服务</p>`;
+            }
+        }
+
+        // 切换选项卡
+        function switchTab(tabName) {
+            // 隐藏所有选项卡内容
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+
+            // 移除所有选项卡的激活状态
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // 显示选中的选项卡
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // 填充测试数据
+        function fillTestData(formType) {
+            if (formType === 'get') {
+                const form = document.getElementById('getForm');
+                form.DBName.value = 'qsoft782';
+                form.total_fee.value = '5000';
+                form.refund_fee.value = '5000';
+                // mch_id, appid 留空，从配置读取
+                form.mch_id.value = '';
+                form.appid.value = '';
+                form.sub_mch_id.value = '1641962649';
+                form.transaction_id.value = '4200002973202601249679270528';
+                form.refund_desc.value = '测试退款';
+            } else if (formType === 'post') {
+                const form = document.getElementById('postForm');
+                const testData = {
+                    dbName: "qsoft782",
+                    // mchId, appId, apiKey 留空，从配置读取
+                    subMchId: "1641962649",
+                    transactionId: "4200002973202601249679270528",
+                    totalFee: 5000,
+                    refundFee: 5000,
+                    refundDesc: "测试退款",
+                    notifyUrl: ""
+                };
+                form.jsonBody.value = JSON.stringify(testData, null, 2);
+            } else if (formType === 'query') {
+                const form = document.getElementById('queryForm');
+                form.out_refund_no.value = 'RF20260128123456';
+                // mch_id 留空，从配置读取
+                form.mch_id.value = '';
+            }
+        }
+
+        // 清空表单
+        function clearForm(formType) {
+            if (formType === 'get') {
+                document.getElementById('getForm').reset();
+                document.getElementById('getResult').style.display = 'none';
+            } else if (formType === 'post') {
+                document.getElementById('postForm').reset();
+                document.getElementById('postResult').style.display = 'none';
+            } else if (formType === 'query') {
+                document.getElementById('queryForm').reset();
+                document.getElementById('queryResult').style.display = 'none';
+            }
+        }
+
+        // 显示加载动画
+        function showLoading() {
+            document.getElementById('loading').classList.add('show');
+        }
+
+        // 隐藏加载动画
+        function hideLoading() {
+            document.getElementById('loading').classList.remove('show');
+        }
+
+        // 显示结果
+        function showResult(elementId, type, message, data = null) {
+            const resultBox = document.getElementById(elementId);
+            resultBox.className = `result-box ${type}`;
+            
+            let html = `<strong>${message}</strong>`;
+            if (data) {
+                html += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            }
+            
+            resultBox.innerHTML = html;
+            resultBox.style.display = 'block';
+        }
+
+        // GET 方式提交退款
+        async function submitRefundGet(event) {
+            event.preventDefault();
+            
+            const form = event.target;
+            const formData = new FormData(form);
+            
+            // 构建 URL 参数
+            const params = new URLSearchParams();
+            for (const [key, value] of formData.entries()) {
+                if (value) {
+                    params.append(key, value);
+                }
+            }
+
+            showLoading();
+
+            try {
+                const response = await fetch(`${API_BASE}/Wechat/Refund?${params.toString()}`);
+                const data = await response.json();
+
+                hideLoading();
+
+                if (data.success) {
+                    showResult('getResult', 'success', '✅ 退款成功！', data);
+                } else {
+                    showResult('getResult', 'error', `❌ 退款失败: ${data.err_code_des || data.return_msg || '未知错误'}`, data);
+                }
+            } catch (error) {
+                hideLoading();
+                showResult('getResult', 'error', `❌ 请求失败: ${error.message}`);
+            }
+        }
+
+        // POST 方式提交退款
+        async function submitRefundPost(event) {
+            event.preventDefault();
+            
+            const form = event.target;
+            let jsonBody;
+
+            try {
+                jsonBody = JSON.parse(form.jsonBody.value);
+            } catch (error) {
+                showResult('postResult', 'error', '❌ JSON 格式错误，请检查输入');
+                return;
+            }
+
+            showLoading();
+
+            try {
+                const response = await fetch(`${API_BASE}/Wechat/Refund`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(jsonBody)
+                });
+
+                const data = await response.json();
+
+                hideLoading();
+
+                if (data.success) {
+                    showResult('postResult', 'success', '✅ 退款成功！', data);
+                } else {
+                    showResult('postResult', 'error', `❌ 退款失败: ${data.errCodeDes || data.returnMsg || '未知错误'}`, data);
+                }
+            } catch (error) {
+                hideLoading();
+                showResult('postResult', 'error', `❌ 请求失败: ${error.message}`);
+            }
+        }
+
+        // 查询退款
+        async function submitQuery(event) {
+            event.preventDefault();
+            
+            const form = event.target;
+            const params = new URLSearchParams();
+            params.append('out_refund_no', form.out_refund_no.value);
+            
+            // 只在有值时添加可选参数
+            if (form.mch_id.value) {
+                params.append('mch_id', form.mch_id.value);
+            }
+
+            showLoading();
+
+            try {
+                const response = await fetch(`${API_BASE}/Wechat/QueryRefund?${params.toString()}`);
+                const data = await response.json();
+
+                hideLoading();
+
+                if (data.success) {
+                    showResult('queryResult', 'success', '✅ 查询成功！', data);
+                } else {
+                    showResult('queryResult', 'error', `❌ 查询失败: ${data.err_code_des || data.return_msg || '未知错误'}`, data);
+                }
+            } catch (error) {
+                hideLoading();
+                showResult('queryResult', 'error', `❌ 请求失败: ${error.message}`);
+            }
+        }
+    </script>
+</body>
+</html>

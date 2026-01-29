@@ -1,0 +1,50 @@
+name: Build Notification (Local Deploy)
+
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Extract commit info
+        id: commit
+        run: |
+          echo "sha=${{ github.sha }}" >> $GITHUB_OUTPUT
+          echo "author=${{ github.actor }}" >> $GITHUB_OUTPUT
+          echo "message=$(git log --format=%B -n 1 ${{ github.sha }})" >> $GITHUB_OUTPUT
+
+      - name: Create deployment notification
+        run: |
+          cat << EOF
+          ========================================
+          ✅ 新版本代码已推送到 GitHub
+          ========================================
+          
+          提交信息:
+            SHA: ${{ steps.commit.outputs.sha }}
+            作者: ${{ steps.commit.outputs.author }}
+          
+          下一步操作:
+          ========================================
+          1. 在本地运行部署脚本:
+             .\build-and-deploy.ps1
+          
+          或使用自定义参数:
+             .\build-and-deploy.ps1 -RemoteHost tx.qsgl.net -RemoteUser root
+          
+          该脚本将执行以下步骤:
+            ✓ 本地编译 Docker 镜像 (Native AOT)
+            ✓ 导出镜像为 TAR 文件
+            ✓ 通过 SSH/SCP 上传到腾讯云服务器
+            ✓ 在远程服务器加载镜像、重启容器
+            ✓ 执行健康检查
+          
+          部署完成后访问: https://payment.qsgl.net
+          ========================================
+          EOF

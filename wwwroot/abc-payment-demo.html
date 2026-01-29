@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>农行支付 - 页面支付演示</title>
+    <style>
+        * {
+                    <div class="form-group">
+                <label for="payTypeID">交易类型 *</label>
+                <select id="payTypeID" name="payTypeID" required>
+                    <option value="ImmediatePay" selected>普通支付</option>
+                    <option value="DividedPay">分期支付</option>
+                    <option value="PreAuthPay">预授权支付</option>
+                </select>
+                <small>选择支付交易类型</small>
+            </div>
+
+            <div class="form-group">
+                <label for="orderDesc">订单描述 *</label>
+                <input type="text" id="orderDesc" name="orderDesc" value="测试订单 - PaymentType=A" required>
+                <small>订单的简要描述</small>
+            </div>
+
+            <div class="form-group">
+                <label for="notifyUrl">异步通知地址 *</label>
+                <input type="url" id="notifyUrl" name="notifyUrl" value="https://payment.qsgl.net/api/payment/abc/notify" required>
+                <small>支付结果异步回调地址</small>
+            </div> 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-group small {
+            display: block;
+            color: #999;
+            margin-top: 5px;
+            font-size: 12px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .result.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .result.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .result h3 {
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+
+        .result pre {
+            background: rgba(0, 0, 0, 0.05);
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 13px;
+            margin-top: 10px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .loading .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+
+        .info-box h4 {
+            color: #1976D2;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .info-box p {
+            color: #555;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏦 农业银行支付</h1>
+            <p>PayReq 页面支付接口演示</p>
+        </div>
+
+        <div class="info-box">
+            <h4>📝 接口说明</h4>
+            <p>
+                服务器地址: <strong>https://payment.qsgl.net</strong><br>
+                接口路径: <strong>/api/payment/abc/pagepay</strong><br>
+                测试商户: <strong>103881636900016</strong>
+            </p>
+        </div>
+
+        <form id="paymentForm">
+            <div class="form-group">
+                <label for="merchantId">商户号 *</label>
+                <input type="text" id="merchantId" name="merchantId" value="103881636900016" required>
+                <small>农行分配的商户号</small>
+            </div>
+
+            <div class="form-group">
+                <label for="amount">支付金额 (元) *</label>
+                <input type="number" id="amount" name="amount" value="0.01" step="0.01" min="0.01" required>
+                <small>最小金额 0.01 元</small>
+            </div>
+
+            <div class="form-group">
+                <label for="payTypeID">交易类型 *</label>
+                <select id="payTypeID" name="payTypeID" required>
+                    <option value="ImmediatePay">普通支付</option>
+                    <option value="DividedPay">分期支付</option>
+                    <option value="PreAuthPay" selected>预授权支付</option>
+                </select>
+                <small>选择支付交易类型</small>
+            </div>
+
+            <div class="form-group">
+                <label for="orderDesc">订单描述 *</label>
+                <input type="text" id="orderDesc" name="orderDesc" value="测试订单 - PaymentType=A" required>
+                <small>订单的简要描述</small>
+            </div>
+
+            <div class="form-group">
+                <label for="notifyUrl">异步通知地址 *</label>
+                <input type="url" id="notifyUrl" name="notifyUrl" value="https://payment.qsgl.net/api/payment/abc/notify" required>
+                <small>支付结果异步回调地址</small>
+            </div>
+
+            <div class="form-group">
+                <label for="merchantSuccessUrl">支付成功跳转地址</label>
+                <input type="url" id="merchantSuccessUrl" name="merchantSuccessUrl" value="https://payment.qsgl.net/payment/success" placeholder="可选">
+                <small>支付成功后跳转的页面</small>
+            </div>
+
+            <div class="form-group">
+                <label for="merchantErrorUrl">支付失败跳转地址</label>
+                <input type="url" id="merchantErrorUrl" name="merchantErrorUrl" value="https://payment.qsgl.net/payment/error" placeholder="可选">
+                <small>支付失败后跳转的页面</small>
+            </div>
+
+            <button type="submit" class="btn" id="submitBtn">
+                🚀 发起支付
+            </button>
+        </form>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>正在处理支付请求...</p>
+        </div>
+
+        <div class="result" id="result">
+            <h3 id="resultTitle"></h3>
+            <div id="resultContent"></div>
+        </div>
+    </div>
+
+    <script>
+        // 配置
+        const API_CONFIG = {
+            // 生产环境
+            baseUrl: 'https://payment.qsgl.net',
+            endpoint: '/api/payment/abc/pagepay',
+            
+            // 本地测试环境 (取消注释以使用本地测试)
+            // baseUrl: 'http://localhost:5000',
+            // endpoint: '/api/payment/abc/pagepay'
+        };
+
+        // 获取表单元素
+        const form = document.getElementById('paymentForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const loading = document.getElementById('loading');
+        const result = document.getElementById('result');
+        const resultTitle = document.getElementById('resultTitle');
+        const resultContent = document.getElementById('resultContent');
+
+        // 生成订单号 (格式: TEST + 时间戳)
+        function generateOrderNo() {
+            return 'TEST' + Date.now();
+        }
+
+        // 显示结果
+        function showResult(success, title, content) {
+            result.style.display = 'block';
+            result.className = 'result ' + (success ? 'success' : 'error');
+            resultTitle.textContent = title;
+            resultContent.innerHTML = content;
+            
+            // 滚动到结果区域
+            result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        // 隐藏结果
+        function hideResult() {
+            result.style.display = 'none';
+        }
+
+        // 表单提交处理
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // 禁用提交按钮
+            submitBtn.disabled = true;
+            submitBtn.textContent = '处理中...';
+            
+            // 显示加载动画
+            loading.style.display = 'block';
+            hideResult();
+
+            try {
+                // 获取表单数据
+                const formData = new FormData(form);
+                
+                // 生成唯一订单号
+                const orderNo = generateOrderNo();
+                
+                // 构建请求数据
+                const requestData = {
+                    merchantId: formData.get('merchantId'),
+                    amount: parseFloat(formData.get('amount')),
+                    orderNo: orderNo,
+                    orderDesc: formData.get('orderDesc'),
+                    payTypeID: formData.get('payTypeID'),
+                    notifyUrl: formData.get('notifyUrl'),
+                    merchantSuccessUrl: formData.get('merchantSuccessUrl') || undefined,
+                    merchantErrorUrl: formData.get('merchantErrorUrl') || undefined
+                };
+
+                console.log('📤 发送支付请求:', requestData);
+
+                // 发送请求
+                const response = await fetch(API_CONFIG.baseUrl + API_CONFIG.endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(requestData)
+                });
+
+                console.log('📥 响应状态:', response.status, response.statusText);
+
+                // 解析响应
+                const responseData = await response.json();
+                console.log('📥 响应数据:', responseData);
+
+                // 隐藏加载动画
+                loading.style.display = 'none';
+
+                // 判断是否成功
+                if (response.ok && responseData.isSuccess && responseData.paymentURL) {
+                    // 支付请求成功
+                    const successHtml = `
+                        <p><strong>订单号:</strong> ${responseData.orderNo}</p>
+                        <p><strong>状态码:</strong> ${responseData.errorCode}</p>
+                        <p><strong>消息:</strong> ${responseData.message}</p>
+                        <p style="margin-top: 15px;">
+                            <strong>支付链接已生成,即将跳转...</strong>
+                        </p>
+                        <pre>${JSON.stringify(responseData, null, 2)}</pre>
+                    `;
+                    
+                    showResult(true, '✅ 支付请求成功', successHtml);
+
+                    // 3秒后跳转到农行支付页面
+                    setTimeout(() => {
+                        console.log('🔗 跳转到支付页面:', responseData.paymentURL);
+                        window.location.href = responseData.paymentURL;
+                    }, 3000);
+
+                } else {
+                    // 支付请求失败
+                    const errorHtml = `
+                        <p><strong>错误码:</strong> ${responseData.errorCode || 'N/A'}</p>
+                        <p><strong>错误信息:</strong> ${responseData.message || '未知错误'}</p>
+                        <pre>${JSON.stringify(responseData, null, 2)}</pre>
+                    `;
+                    
+                    showResult(false, '❌ 支付请求失败', errorHtml);
+                }
+
+            } catch (error) {
+                console.error('❌ 请求异常:', error);
+                
+                loading.style.display = 'none';
+                
+                const errorHtml = `
+                    <p><strong>异常类型:</strong> ${error.name}</p>
+                    <p><strong>异常信息:</strong> ${error.message}</p>
+                    <p style="margin-top: 10px;">
+                        <strong>可能原因:</strong><br>
+                        1. 网络连接失败<br>
+                        2. 服务器未响应<br>
+                        3. CORS跨域问题<br>
+                        4. 服务器内部错误
+                    </p>
+                    <pre>${error.stack || ''}</pre>
+                `;
+                
+                showResult(false, '❌ 网络请求失败', errorHtml);
+            } finally {
+                // 恢复提交按钮
+                submitBtn.disabled = false;
+                submitBtn.textContent = '🚀 发起支付';
+            }
+        });
+
+        // 页面加载完成后的初始化
+        window.addEventListener('load', () => {
+            console.log('✅ 页面加载完成');
+            console.log('🔧 API配置:', API_CONFIG);
+            console.log('💡 提示: 打开浏览器开发者工具 (F12) 查看详细日志');
+        });
+    </script>
+</body>
+</html>

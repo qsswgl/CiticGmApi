@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>微信服务商退款测试</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #09bb07 0%, #07c160 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #07c160;
+        }
+
+        .form-group small {
+            display: block;
+            margin-top: 5px;
+            color: #666;
+            font-size: 12px;
+        }
+
+        .required {
+            color: #f56c6c;
+            margin-left: 3px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        button {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #09bb07 0%, #07c160 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(7, 193, 96, 0.3);
+        }
+
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #666;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .response-panel {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            display: none;
+        }
+
+        .response-panel.show {
+            display: block;
+        }
+
+        .response-panel h3 {
+            margin-bottom: 15px;
+            color: #333;
+            font-size: 18px;
+        }
+
+        .response-content {
+            background: white;
+            padding: 15px;
+            border-radius: 4px;
+            border-left: 4px solid #07c160;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .response-content.error {
+            border-left-color: #f56c6c;
+        }
+
+        .response-item {
+            margin-bottom: 10px;
+            display: flex;
+        }
+
+        .response-item label {
+            min-width: 150px;
+            color: #666;
+            font-size: 13px;
+        }
+
+        .response-item value {
+            color: #333;
+            font-weight: 500;
+            word-break: break-all;
+        }
+
+        .success-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            background: #67c23a;
+            color: white;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+
+        .error-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            background: #f56c6c;
+            color: white;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #07c160;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #e0e0e0;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 15px;
+            color: #666;
+            transition: all 0.3s;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+        }
+
+        .tab.active {
+            color: #07c160;
+            border-bottom-color: #07c160;
+            font-weight: 500;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        code {
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+
+        .info-box h4 {
+            color: #1976d2;
+            margin-bottom: 10px;
+            font-size: 15px;
+        }
+
+        .info-box p {
+            color: #555;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M8.5 12.5L10.5 14.5L15.5 9.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="white" stroke-width="2"/>
+                </svg>
+                微信服务商退款API测试
+            </h1>
+            <p>服务商为特约商户提供的微信退款服务</p>
+        </div>
+
+        <div class="content">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('refund')">退款接口</button>
+                <button class="tab" onclick="switchTab('query')">退款查询</button>
+                <button class="tab" onclick="switchTab('docs')">接口文档</button>
+            </div>
+
+            <!-- 退款接口标签 -->
+            <div id="refund-tab" class="tab-content active">
+                <div class="info-box">
+                    <h4>📋 退款说明</h4>
+                    <p>• 支持按微信订单号或商户订单号退款<br>
+                       • 退款金额不能超过订单总金额<br>
+                       • 需要提供服务商商户号和API密钥<br>
+                       • 退款通常在1-3个工作日内到账</p>
+                </div>
+
+                <form id="refundForm">
+                    <div class="form-group">
+                        <label>数据库名称 <span class="required">*</span></label>
+                        <input type="text" id="dbname" value="qsoft782" required>
+                        <small>业务数据库名称</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>服务商商户号 <span class="required">*</span></label>
+                        <input type="text" id="mch_id" value="1286651401" required>
+                        <small>微信支付服务商商户号</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>服务商 AppId <span class="required">*</span></label>
+                        <input type="text" id="appid" value="wxc74a6aac13640229" required>
+                        <small>微信开放平台AppId</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>API 密钥 <span class="required">*</span></label>
+                        <input type="password" id="api_key" value="" required>
+                        <small>在微信商户平台设置的API密钥（32位）</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>特约商户号 <span class="required">*</span></label>
+                        <input type="text" id="sub_mch_id" value="1641962649" required>
+                        <small>特约商户的微信支付商户号</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>微信订单号</label>
+                        <input type="text" id="transaction_id" value="4200002973202601249679270528">
+                        <small>微信支付订单号（优先使用，与商户订单号二选一）</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>商户订单号</label>
+                        <input type="text" id="out_trade_no" value="">
+                        <small>商户系统内部订单号（微信订单号为空时必填）</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>订单总金额(分) <span class="required">*</span></label>
+                        <input type="number" id="total_fee" value="5000" required>
+                        <small>原订单总金额，单位为分（例如：5000 = 50.00元）</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>退款金额(分) <span class="required">*</span></label>
+                        <input type="number" id="refund_fee" value="5000" required>
+                        <small>本次退款金额，单位为分（不能超过订单总金额）</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>退款原因</label>
+                        <textarea id="refund_desc" rows="2" placeholder="客户申请退款">客户申请退款</textarea>
+                        <small>退款原因描述，将在微信侧显示</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>退款通知URL</label>
+                        <input type="text" id="notify_url" value="" placeholder="https://your-domain.com/wechat/notify">
+                        <small>接收退款结果通知的回调地址（可选）</small>
+                    </div>
+
+                    <div class="button-group">
+                        <button type="submit" class="btn-primary">🚀 发起退款</button>
+                        <button type="button" class="btn-secondary" onclick="resetForm()">🔄 重置表单</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- 退款查询标签 -->
+            <div id="query-tab" class="tab-content">
+                <div class="info-box">
+                    <h4>🔍 退款查询说明</h4>
+                    <p>• 通过商户退款单号查询退款状态<br>
+                       • 可以查询退款处理进度和退款详情<br>
+                       • 建议在发起退款后使用此接口轮询结果</p>
+                </div>
+
+                <form id="queryForm">
+                    <div class="form-group">
+                        <label>商户退款单号 <span class="required">*</span></label>
+                        <input type="text" id="query_out_refund_no" value="" required>
+                        <small>发起退款时生成的退款单号，格式如：RF20260124123456</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>服务商商户号 <span class="required">*</span></label>
+                        <input type="text" id="query_mch_id" value="1286651401" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>API 密钥 <span class="required">*</span></label>
+                        <input type="password" id="query_api_key" value="" required>
+                    </div>
+
+                    <div class="button-group">
+                        <button type="submit" class="btn-primary">🔍 查询退款</button>
+                        <button type="button" class="btn-secondary" onclick="document.getElementById('queryForm').reset()">🔄 重置</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- 接口文档标签 -->
+            <div id="docs-tab" class="tab-content">
+                <div class="info-box">
+                    <h4>📖 接口地址</h4>
+                    <p><strong>退款接口：</strong><br>
+                    GET <code>https://payment.qsgl.net/Wechat/Refund</code><br><br>
+                    <strong>退款查询：</strong><br>
+                    GET <code>https://payment.qsgl.net/Wechat/QueryRefund</code></p>
+                </div>
+
+                <h3 style="margin: 20px 0 10px; color: #333;">请求参数</h3>
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                    <thead>
+                        <tr style="background: #f5f5f5;">
+                            <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">参数名</th>
+                            <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">必填</th>
+                            <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">说明</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="padding: 10px; border: 1px solid #ddd;"><code>DBName</code></td>
+                            <td style="padding: 10px; border: 1px solid #ddd;">是</td>
+                            <td style="padding: 10px; border: 1px solid #ddd;">数据库名称</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px; border: 1px solid #ddd;"><code>mch_id</code></td>
+                            <td style="padding: 10px; border: 1px solid #ddd;">是</td>
+                            <td style="padding: 10px; border: 1px solid #ddd;">服务商商户号</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px; border: 1px solid #ddd;"><code>appid</code></td>
+                            <td style="padding: 10px; border: 1px solid #ddd;">是</td>
+                            <td style="padding: 10px; border: 1px solid #ddd;">服务商AppId</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px; border: 1px solid #ddd;"><code>api_key</code></td>
+                            <td style="padding: 10px; border: 1px solid #ddd;">是</td>
+                            <td style="padding: 10px; border: 1px solid #ddd;">API密钥（32位）</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px; border: 1px solid #ddd;"><code>sub_mch_id</code></td>
+                            <td style="padding: 10px; border: 1px solid #ddd;">是</td>
+                            <td style="padding: 10px; border: 1px solid #ddd;">特约商户号</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px; border: 1px solid #ddd;"><code>transaction_id</code></td>
+                            <td style="padding: 10px; border: 1px solid #ddd;">否*</td>
+                            <td style="padding: 10px; border: 1px solid #ddd;">微信订单号（与out_trade_no二选一）</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px; border: 1px solid #ddd;"><code>out_trade_no</code></td>
+                            <td style="padding: 10px; border: 1px solid #ddd;">否*</td>
+                            <td style="padding: 10px; border: 1px solid #ddd;">商户订单号</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px; border: 1px solid #ddd;"><code>total_fee</code></td>
+                            <td style="padding: 10px; border: 1px solid #ddd;">是</td>
+                            <td style="padding: 10px; border: 1px solid #ddd;">订单总金额（分）</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px; border: 1px solid #ddd;"><code>refund_fee</code></td>
+                            <td style="padding: 10px; border: 1px solid #ddd;">是</td>
+                            <td style="padding: 10px; border: 1px solid #ddd;">退款金额（分）</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3 style="margin: 20px 0 10px; color: #333;">响应示例</h3>
+                <pre style="background: #f5f5f5; padding: 15px; border-radius: 4px; overflow-x: auto; font-size: 13px;"><code>{
+  "success": true,
+  "return_code": "SUCCESS",
+  "result_code": "SUCCESS",
+  "transaction_id": "4200002973202601249679270528",
+  "out_refund_no": "RF20260124120001",
+  "refund_id": "50301234567890123456789012345",
+  "refund_fee": 5000,
+  "total_fee": 5000,
+  "cash_refund_fee": 5000,
+  "message": "退款成功"
+}</code></pre>
+            </div>
+
+            <!-- 加载动画 -->
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>处理中，请稍候...</p>
+            </div>
+
+            <!-- 响应面板 -->
+            <div class="response-panel" id="responsePanel">
+                <h3 id="responseTitle">响应结果</h3>
+                <div class="response-content" id="responseContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 切换标签
+        function switchTab(tabName) {
+            // 隐藏所有标签内容
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // 显示选中的标签
+            document.getElementById(tabName + '-tab').classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // 退款表单提交
+        document.getElementById('refundForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const dbname = document.getElementById('dbname').value;
+            const mchId = document.getElementById('mch_id').value;
+            const appid = document.getElementById('appid').value;
+            const apiKey = document.getElementById('api_key').value;
+            const subMchId = document.getElementById('sub_mch_id').value;
+            const transactionId = document.getElementById('transaction_id').value;
+            const outTradeNo = document.getElementById('out_trade_no').value;
+            const totalFee = document.getElementById('total_fee').value;
+            const refundFee = document.getElementById('refund_fee').value;
+            const refundDesc = document.getElementById('refund_desc').value;
+            const notifyUrl = document.getElementById('notify_url').value;
+
+            // 验证
+            if (!transactionId && !outTradeNo) {
+                alert('请至少填写微信订单号或商户订单号其中一个');
+                return;
+            }
+
+            if (!apiKey) {
+                alert('请输入API密钥');
+                return;
+            }
+
+            // 构建URL
+            const params = new URLSearchParams({
+                DBName: dbname,
+                mch_id: mchId,
+                appid: appid,
+                api_key: apiKey,
+                sub_mch_id: subMchId,
+                total_fee: totalFee,
+                refund_fee: refundFee
+            });
+
+            if (transactionId) params.append('transaction_id', transactionId);
+            if (outTradeNo) params.append('out_trade_no', outTradeNo);
+            if (refundDesc) params.append('refund_desc', refundDesc);
+            if (notifyUrl) params.append('notify_url', notifyUrl);
+
+            const url = `/Wechat/Refund?${params.toString()}`;
+
+            // 显示加载
+            showLoading();
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+
+                hideLoading();
+                showResponse('退款结果', data, data.success);
+
+                // 如果成功，保存退款单号到查询表单
+                if (data.success && data.out_refund_no) {
+                    document.getElementById('query_out_refund_no').value = data.out_refund_no;
+                }
+            } catch (error) {
+                hideLoading();
+                showResponse('请求失败', { error: error.message }, false);
+            }
+        });
+
+        // 查询表单提交
+        document.getElementById('queryForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const outRefundNo = document.getElementById('query_out_refund_no').value;
+            const mchId = document.getElementById('query_mch_id').value;
+            const apiKey = document.getElementById('query_api_key').value;
+
+            if (!outRefundNo || !apiKey) {
+                alert('请填写必填字段');
+                return;
+            }
+
+            const url = `/Wechat/QueryRefund?out_refund_no=${outRefundNo}&mch_id=${mchId}&api_key=${apiKey}`;
+
+            showLoading();
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+
+                hideLoading();
+                showResponse('查询结果', data, data.success);
+            } catch (error) {
+                hideLoading();
+                showResponse('查询失败', { error: error.message }, false);
+            }
+        });
+
+        // 显示加载动画
+        function showLoading() {
+            document.getElementById('loading').classList.add('show');
+            document.getElementById('responsePanel').classList.remove('show');
+        }
+
+        // 隐藏加载动画
+        function hideLoading() {
+            document.getElementById('loading').classList.remove('show');
+        }
+
+        // 显示响应结果
+        function showResponse(title, data, isSuccess) {
+            const panel = document.getElementById('responsePanel');
+            const titleEl = document.getElementById('responseTitle');
+            const content = document.getElementById('responseContent');
+
+            titleEl.innerHTML = title + (isSuccess ? 
+                '<span class="success-badge">✓ 成功</span>' : 
+                '<span class="error-badge">✗ 失败</span>');
+
+            content.className = 'response-content' + (isSuccess ? '' : ' error');
+
+            let html = '';
+            for (const [key, value] of Object.entries(data)) {
+                if (key !== 'raw_xml') {
+                    html += `
+                        <div class="response-item">
+                            <label>${key}:</label>
+                            <value>${value === null || value === '' ? '-' : value}</value>
+                        </div>
+                    `;
+                }
+            }
+
+            content.innerHTML = html;
+            panel.classList.add('show');
+        }
+
+        // 重置表单
+        function resetForm() {
+            document.getElementById('refundForm').reset();
+            document.getElementById('dbname').value = 'qsoft782';
+            document.getElementById('mch_id').value = '1286651401';
+            document.getElementById('appid').value = 'wxc74a6aac13640229';
+            document.getElementById('sub_mch_id').value = '1641962649';
+            document.getElementById('total_fee').value = '5000';
+            document.getElementById('refund_fee').value = '5000';
+            document.getElementById('refund_desc').value = '客户申请退款';
+        }
+    </script>
+</body>
+</html>

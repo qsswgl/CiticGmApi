@@ -1,0 +1,36 @@
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine
+WORKDIR /app
+
+# 设置时区为中国
+ENV TZ=Asia/Shanghai
+RUN apk add --no-cache tzdata && \
+    ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && \
+    echo $TZ > /etc/timezone
+
+# 配置 OpenSSL 以支持旧版 SSL 重新协商（兼容农行服务器）
+ENV OPENSSL_CONF=/etc/ssl/openssl-custom.cnf
+RUN echo -e 'openssl_conf = openssl_init\n\
+[openssl_init]\n\
+ssl_conf = ssl_sect\n\
+\n\
+[ssl_sect]\n\
+system_default = system_default_sect\n\
+\n\
+[system_default_sect]\n\
+Options = UnsafeLegacyRenegotiation' > /etc/ssl/openssl-custom.cnf
+
+# 复制发布的文件
+COPY publish/ .
+
+# 创建日志目录
+RUN mkdir -p /app/logs && chmod 755 /app/logs
+
+# 暴露端口
+EXPOSE 8080
+
+# 设置环境变量
+ENV ASPNETCORE_URLS=http://+:8080
+ENV ASPNETCORE_ENVIRONMENT=Production
+
+# 启动应用
+ENTRYPOINT ["dotnet", "AbcPaymentGateway.dll"]

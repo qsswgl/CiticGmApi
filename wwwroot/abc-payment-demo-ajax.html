@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width$.<span class="function">ajax</span>({
+    uaxios.<span class="function">post</span>(<span class="<span class="keyword">var</span> data = JSON.<span class="functio        function getPaymentData() {
+            return {
+                merchantId: '103881636900016',
+                amount: 0.01,
+                orderNo: 'TEST' + Date.now(),
+                orderDesc: '测试订单-PaymentType=A',
+                payTypeID: 'PreAuthPay',
+                notifyUrl: 'https://payment.qsgl.net/api/payment/abc/notify',
+                merchantSuccessUrl: 'https://payment.qsgl.net/payment/success',
+                merchantErrorUrl: 'https://payment.qsgl.net/payment/error'
+            };
+        }y</span>({
+    merchantId: <span class="string">'103881636900016'</span>,
+    amount: <span class="number">0.01</span>,
+    orderNo: <span class="string">'TEST'</span> + Date.<span class="function">now</span>(),
+    orderDesc: <span class="string">'测试订单-PaymentType=A'</span>,
+    payTypeID: <span class="string">'ImmediatePay'</span>,
+    notifyUrl: <span class="string">'https://payment.qsgl.net/api/payment/abc/notify'</span>
+});>'https://payment.qsgl.net/api/payment/abc/pagepay'</span>, {
+    merchantId: <span class="string">'103881636900016'</span>,
+    amount: <span class="number">0.01</span>,
+    orderNo: <span class="string">'TEST'</span> + Date.<span class="function">now</span>(),
+    orderDesc: <span class="string">'测试订单-PaymentType=A'</span>,
+    payTypeID: <span class="string">'PreAuthPay'</span>,
+    notifyUrl: <span class="string">'https://payment.qsgl.net/api/payment/abc/notify'</span>,
+    merchantSuccessUrl: <span class="string">'https://payment.qsgl.net/payment/success'</span>,
+    merchantErrorUrl: <span class="string">'https://payment.qsgl.net/payment/error'</span>
+}) class="string">'https://payment.qsgl.net/api/payment/abc/pagepay'</span>,
+    type: <span class="string">'POST'</span>,
+    contentType: <span class="string">'application/json'</span>,
+    data: JSON.<span class="function">stringify</span>({
+        merchantId: <span class="string">'103881636900016'</span>,
+        amount: <span class="number">0.01</span>,
+        orderNo: <span class="string">'TEST'</span> + Date.<span class="function">now</span>(),
+        orderDesc: <span class="string">'测试订单-PaymentType=A'</span>,
+        payTypeID: <span class="string">'PreAuthPay'</span>,
+        notifyUrl: <span class="string">'https://payment.qsgl.net/api/payment/abc/notify'</span>,
+        merchantSuccessUrl: <span class="string">'https://payment.qsgl.net/payment/success'</span>,
+        merchantErrorUrl: <span class="string">'https://payment.qsgl.net/payment/error'</span>
+    }),, initial-scale=1.0">
+    <title>农行支付 - AJAX调用示例</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .code-section {
+            background: #fff;
+            padding: 30px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #333;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        pre {
+            background: #282c34;
+            color: #abb2bf;
+            padding: 20px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .keyword { color: #c678dd; }
+        .string { color: #98c379; }
+        .function { color: #61afef; }
+        .comment { color: #5c6370; font-style: italic; }
+        .number { color: #d19a66; }
+        .btn-test {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        .btn-test:hover {
+            background: #5568d3;
+        }
+        #testResult {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 6px;
+            display: none;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <h1>🏦 农行支付接口调用示例</h1>
+    
+    <!-- 方法一: 原生 Fetch API -->
+    <div class="code-section">
+        <h2>方法一: 使用 Fetch API (推荐)</h2>
+        <pre><code><span class="comment">// 1. 配置接口地址</span>
+<span class="keyword">const</span> API_URL = <span class="string">'https://payment.qsgl.net/api/payment/abc/pagepay'</span>;
+
+<span class="comment">// 2. 准备支付数据</span>
+<span class="keyword">const</span> paymentData = {
+    merchantId: <span class="string">'103881636900016'</span>,           <span class="comment">// 商户号</span>
+    amount: <span class="number">0.01</span>,                            <span class="comment">// 支付金额(元)</span>
+    orderNo: <span class="string">'TEST'</span> + Date.<span class="function">now</span>(),          <span class="comment">// 订单号(唯一)</span>
+    orderDesc: <span class="string">'测试订单-PaymentType=A'</span>,     <span class="comment">// 订单描述</span>
+    payTypeID: <span class="string">'PreAuthPay'</span>,                 <span class="comment">// 交易类型: ImmediatePay/DividedPay/PreAuthPay</span>
+    notifyUrl: <span class="string">'https://payment.qsgl.net/api/payment/abc/notify'</span>,  <span class="comment">// 回调地址</span>
+    merchantSuccessUrl: <span class="string">'https://payment.qsgl.net/payment/success'</span>, <span class="comment">// 成功跳转(可选)</span>
+    merchantErrorUrl: <span class="string">'https://payment.qsgl.net/payment/error'</span>      <span class="comment">// 失败跳转(可选)</span>
+};
+
+<span class="comment">// 3. 发送支付请求</span>
+<span class="keyword">async function</span> <span class="function">createPayment</span>() {
+    <span class="keyword">try</span> {
+        <span class="keyword">const</span> response = <span class="keyword">await</span> <span class="function">fetch</span>(API_URL, {
+            method: <span class="string">'POST'</span>,
+            headers: {
+                <span class="string">'Content-Type'</span>: <span class="string">'application/json'</span>
+            },
+            body: JSON.<span class="function">stringify</span>(paymentData)
+        });
+
+        <span class="keyword">const</span> result = <span class="keyword">await</span> response.<span class="function">json</span>();
+        
+        <span class="keyword">if</span> (result.isSuccess && result.paymentURL) {
+            <span class="comment">// 跳转到农行支付页面</span>
+            window.location.href = result.paymentURL;
+        } <span class="keyword">else</span> {
+            console.<span class="function">error</span>(<span class="string">'支付失败:'</span>, result.message);
+        }
+    } <span class="keyword">catch</span> (error) {
+        console.<span class="function">error</span>(<span class="string">'请求异常:'</span>, error);
+    }
+}</code></pre>
+        <button class="btn-test" onclick="testFetch()">🚀 测试 Fetch 调用</button>
+    </div>
+
+    <!-- 方法二: jQuery Ajax -->
+    <div class="code-section">
+        <h2>方法二: 使用 jQuery.ajax</h2>
+        <pre><code><span class="comment">// 需要先引入 jQuery: &lt;script src="https://code.jquery.com/jquery-3.6.0.min.js"&gt;&lt;/script&gt;</span>
+
+$.<span class="function">ajax</span>({
+    url: <span class="string">'https://payment.qsgl.net/api/payment/abc/pagepay'</span>,
+    type: <span class="string">'POST'</span>,
+    contentType: <span class="string">'application/json'</span>,
+    data: JSON.<span class="function">stringify</span>({
+        merchantId: <span class="string">'103881636900016'</span>,
+        amount: <span class="number">0.01</span>,
+        orderNo: <span class="string">'TEST'</span> + Date.<span class="function">now</span>(),
+        orderDesc: <span class="string">'测试订单-PaymentType=A'</span>,
+        payTypeID: <span class="string">'PreAuthPay'</span>,
+        notifyUrl: <span class="string">'https://payment.qsgl.net/api/payment/abc/notify'</span>,
+        merchantSuccessUrl: <span class="string">'https://payment.qsgl.net/payment/success'</span>,
+        merchantErrorUrl: <span class="string">'https://payment.qsgl.net/payment/error'</span>
+    }),
+    <span class="function">success</span>: <span class="keyword">function</span>(result) {
+        <span class="keyword">if</span> (result.isSuccess && result.paymentURL) {
+            window.location.href = result.paymentURL;
+        } <span class="keyword">else</span> {
+            <span class="function">alert</span>(<span class="string">'支付失败: '</span> + result.message);
+        }
+    },
+    <span class="function">error</span>: <span class="keyword">function</span>(xhr, status, error) {
+        console.<span class="function">error</span>(<span class="string">'请求失败:'</span>, error);
+    }
+});</code></pre>
+        <button class="btn-test" onclick="testJQuery()">🚀 测试 jQuery 调用</button>
+    </div>
+
+    <!-- 方法三: Axios -->
+    <div class="code-section">
+        <h2>方法三: 使用 Axios</h2>
+        <pre><code><span class="comment">// 需要先引入 Axios: &lt;script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"&gt;&lt;/script&gt;</span>
+
+axios.<span class="function">post</span>(<span class="string">'https://payment.qsgl.net/api/payment/abc/pagepay'</span>, {
+    merchantId: <span class="string">'103881636900016'</span>,
+    amount: <span class="number">0.01</span>,
+    orderNo: <span class="string">'TEST'</span> + Date.<span class="function">now</span>(),
+    orderDesc: <span class="string">'测试订单-PaymentType=1'</span>,
+    notifyUrl: <span class="string">'https://payment.qsgl.net/api/payment/abc/notify'</span>,
+    merchantSuccessUrl: <span class="string">'https://payment.qsgl.net/payment/success'</span>,
+    merchantErrorUrl: <span class="string">'https://payment.qsgl.net/payment/error'</span>
+})
+.<span class="function">then</span>(<span class="keyword">function</span>(response) {
+    <span class="keyword">const</span> result = response.data;
+    <span class="keyword">if</span> (result.isSuccess && result.paymentURL) {
+        window.location.href = result.paymentURL;
+    } <span class="keyword">else</span> {
+        console.<span class="function">error</span>(<span class="string">'支付失败:'</span>, result.message);
+    }
+})
+.<span class="function">catch</span>(<span class="keyword">function</span>(error) {
+    console.<span class="function">error</span>(<span class="string">'请求异常:'</span>, error);
+});</code></pre>
+        <button class="btn-test" onclick="testAxios()">🚀 测试 Axios 调用</button>
+    </div>
+
+    <!-- 方法四: 原生 XMLHttpRequest -->
+    <div class="code-section">
+        <h2>方法四: 使用 XMLHttpRequest (兼容旧浏览器)</h2>
+        <pre><code><span class="keyword">var</span> xhr = <span class="keyword">new</span> <span class="function">XMLHttpRequest</span>();
+xhr.<span class="function">open</span>(<span class="string">'POST'</span>, <span class="string">'https://payment.qsgl.net/api/payment/abc/pagepay'</span>, <span class="keyword">true</span>);
+xhr.<span class="function">setRequestHeader</span>(<span class="string">'Content-Type'</span>, <span class="string">'application/json'</span>);
+
+xhr.<span class="function">onreadystatechange</span> = <span class="keyword">function</span>() {
+    <span class="keyword">if</span> (xhr.readyState === <span class="number">4</span>) {
+        <span class="keyword">if</span> (xhr.status === <span class="number">200</span>) {
+            <span class="keyword">var</span> result = JSON.<span class="function">parse</span>(xhr.responseText);
+            <span class="keyword">if</span> (result.isSuccess && result.paymentURL) {
+                window.location.href = result.paymentURL;
+            } <span class="keyword">else</span> {
+                console.<span class="function">error</span>(<span class="string">'支付失败:'</span>, result.message);
+            }
+        } <span class="keyword">else</span> {
+            console.<span class="function">error</span>(<span class="string">'请求失败:'</span>, xhr.status);
+        }
+    }
+};
+
+<span class="keyword">var</span> data = JSON.<span class="function">stringify</span>({
+    merchantId: <span class="string">'103881636900016'</span>,
+    amount: <span class="number">0.01</span>,
+    orderNo: <span class="string">'TEST'</span> + Date.<span class="function">now</span>(),
+    orderDesc: <span class="string">'测试订单-PaymentType=1'</span>,
+    notifyUrl: <span class="string">'https://payment.qsgl.net/api/payment/abc/notify'</span>
+});
+
+xhr.<span class="function">send</span>(data);</code></pre>
+        <button class="btn-test" onclick="testXHR()">🚀 测试 XHR 调用</button>
+    </div>
+
+    <!-- 响应格式说明 -->
+    <div class="code-section">
+        <h2>📄 响应数据格式</h2>
+        <pre><code><span class="comment">// 成功响应示例</span>
+{
+    <span class="string">"isSuccess"</span>: <span class="keyword">true</span>,
+    <span class="string">"orderNo"</span>: <span class="string">"TEST1737523456789"</span>,
+    <span class="string">"paymentURL"</span>: <span class="string">"https://pay.abchina.com/EbusPerbankFront/PaymentModeNewAct?TOKEN=..."</span>,
+    <span class="string">"status"</span>: <span class="string">"SUCCESS"</span>,
+    <span class="string">"message"</span>: <span class="string">"交易成功"</span>,
+    <span class="string">"errorCode"</span>: <span class="string">"0000"</span>
+}
+
+<span class="comment">// 失败响应示例</span>
+{
+    <span class="string">"isSuccess"</span>: <span class="keyword">false</span>,
+    <span class="string">"orderNo"</span>: <span class="string">"TEST1737523456789"</span>,
+    <span class="string">"paymentURL"</span>: <span class="keyword">null</span>,
+    <span class="string">"status"</span>: <span class="string">"FAILED"</span>,
+    <span class="string">"message"</span>: <span class="string">"金额格式错误"</span>,
+    <span class="string">"errorCode"</span>: <span class="string">"9998"</span>
+}</code></pre>
+    </div>
+
+    <!-- 测试结果显示区域 -->
+    <div id="testResult"></div>
+
+    <!-- 引入 jQuery 和 Axios -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+    <script>
+        const API_URL = 'https://payment.qsgl.net/api/payment/abc/pagepay';
+
+        function showResult(success, message, data) {
+            const resultDiv = document.getElementById('testResult');
+            resultDiv.className = success ? 'success' : 'error';
+            resultDiv.innerHTML = `
+                <h3>${success ? '✅ 成功' : '❌ 失败'}</h3>
+                <p>${message}</p>
+                <pre>${JSON.stringify(data, null, 2)}</pre>
+            `;
+            resultDiv.style.display = 'block';
+            resultDiv.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function getPaymentData() {
+            return {
+                merchantId: '103881636900016',
+                amount: 0.01,
+                orderNo: 'TEST' + Date.now(),
+                orderDesc: '测试订单-PaymentType=1',
+                notifyUrl: 'https://payment.qsgl.net/api/payment/abc/notify',
+                merchantSuccessUrl: 'https://payment.qsgl.net/payment/success',
+                merchantErrorUrl: 'https://payment.qsgl.net/payment/error'
+            };
+        }
+
+        // 测试 Fetch
+        async function testFetch() {
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(getPaymentData())
+                });
+                const result = await response.json();
+                
+                if (result.isSuccess && result.paymentURL) {
+                    showResult(true, '支付链接已生成,3秒后跳转...', result);
+                    setTimeout(() => window.location.href = result.paymentURL, 3000);
+                } else {
+                    showResult(false, result.message, result);
+                }
+            } catch (error) {
+                showResult(false, '请求异常: ' + error.message, error);
+            }
+        }
+
+        // 测试 jQuery
+        function testJQuery() {
+            $.ajax({
+                url: API_URL,
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(getPaymentData()),
+                success: function(result) {
+                    if (result.isSuccess && result.paymentURL) {
+                        showResult(true, '支付链接已生成,3秒后跳转...', result);
+                        setTimeout(() => window.location.href = result.paymentURL, 3000);
+                    } else {
+                        showResult(false, result.message, result);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    showResult(false, '请求失败: ' + error, { status, error });
+                }
+            });
+        }
+
+        // 测试 Axios
+        function testAxios() {
+            axios.post(API_URL, getPaymentData())
+                .then(function(response) {
+                    const result = response.data;
+                    if (result.isSuccess && result.paymentURL) {
+                        showResult(true, '支付链接已生成,3秒后跳转...', result);
+                        setTimeout(() => window.location.href = result.paymentURL, 3000);
+                    } else {
+                        showResult(false, result.message, result);
+                    }
+                })
+                .catch(function(error) {
+                    showResult(false, '请求异常: ' + error.message, error);
+                });
+        }
+
+        // 测试 XHR
+        function testXHR() {
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', API_URL, true);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        var result = JSON.parse(xhr.responseText);
+                        if (result.isSuccess && result.paymentURL) {
+                            showResult(true, '支付链接已生成,3秒后跳转...', result);
+                            setTimeout(() => window.location.href = result.paymentURL, 3000);
+                        } else {
+                            showResult(false, result.message, result);
+                        }
+                    } else {
+                        showResult(false, '请求失败: HTTP ' + xhr.status, { status: xhr.status });
+                    }
+                }
+            };
+            
+            xhr.send(JSON.stringify(getPaymentData()));
+        }
+    </script>
+</body>
+</html>
